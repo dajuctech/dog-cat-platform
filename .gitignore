@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.pyd
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.log
+*.pot
+*.pyc
+
+# Data files
+data/raw/
+data/processed/
+data/external/
+data/*.zip
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints
+
+# TensorFlow/PyTorch cache
+*.tfrecord
+*.h5
+*.pth
+
+# Virtual environments
+*.venv/
+*.env/
+*.envrc
+*.DS_Store
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Node/React
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+*.yarn-integrity
+*.env.local
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Docker
+docker-compose.override.yml
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Airflow
+airflow.db
+airflow.cfg
+logs/
+
+# Others
+*.bak
+*.swp
+*.swo
+*.~lock.*
+*.idea/
+*.iml
