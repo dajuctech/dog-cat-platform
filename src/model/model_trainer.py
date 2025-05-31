@@ -1,4 +1,6 @@
-import sys
+reform both code to captureed both
+
+*import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
@@ -118,4 +120,83 @@ if __name__ == "__main__":
     model, history = train_model(train_gen, val_gen, epochs=10, architecture='efficientnetv2')
 
     # Evaluate after training
-    evaluate_model(model, val_gen)
+    evaluate_model(model, val_gen) *
+
+*import os
+import sys
+import logging
+import mlflow
+import mlflow.keras
+import tensorflow as tf
+from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout, BatchNormalization
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
+import matplotlib.pyplot as plt
+import numpy as np
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def build_model(input_shape=(300, 300, 3), num_classes=1):
+    base_model = EfficientNetB0(weights='imagenet', include_top=False, input_shape=input_shape)
+    base_model.trainable = False
+
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.5)(x)
+    output = Dense(num_classes, activation='sigmoid')(x)
+
+    model = Model(inputs=base_model.input, outputs=output)
+    return model
+
+def train_with_mlflow(train_gen, val_gen, epochs=10, model_save_path='models/model_mlflow.h5'):
+    logger.info("Starting training with MLflow tracking...")
+    
+    mlflow.set_experiment("dog-cat-classification")
+    
+    with mlflow.start_run():
+        model = build_model()
+        model.compile(optimizer=tf.keras.optimizers.Adam(1e-4),
+                      loss='binary_crossentropy',
+                      metrics=['accuracy'])
+
+        callbacks = [
+            EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True),
+            ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2),
+            ModelCheckpoint(model_save_path, save_best_only=True)
+        ]
+
+        history = model.fit(
+            train_gen,
+            validation_data=val_gen,
+            epochs=epochs,
+            callbacks=callbacks
+        )
+
+        # Log parameters
+        mlflow.log_param("epochs", epochs)
+        mlflow.log_param("batch_size", train_gen.batch_size)
+        
+        # Log metrics
+        val_loss, val_acc = model.evaluate(val_gen)
+        mlflow.log_metric("val_loss", val_loss)
+        mlflow.log_metric("val_accuracy", val_acc)
+
+        # Log model
+        mlflow.keras.log_model(model, "model")
+
+        logger.info("Training complete with MLflow tracking.")
+
+if __name__ == "__main__":
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+    from src.data_pipeline.data_preprocessing import create_generators
+
+    TRAIN_DIR = 'data/processed/dogs-vs-cats-vvsmall/train'
+    VALIDATION_DIR = 'data/processed/dogs-vs-cats-vvsmall/validation'
+    train_gen, val_gen = create_generators(TRAIN_DIR, VALIDATION_DIR)
+
+    os.makedirs('models', exist_ok=True)
+    train_with_mlflow(train_gen, val_gen, epochs=10) *
